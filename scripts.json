@@ -1,0 +1,100 @@
+[
+    {
+        "label": "Clear Log",
+        "needs_sudo": false,
+        "path": "Clear Log",
+        "tags": ["utility", "log"],
+        "description": "Clear all output from the log window"
+    },
+    {
+        "label": "Image Import",
+        "needs_sudo": false,
+        "path": "/home/ninja/apps/script_runner/bash/images_from_cam",
+        "tags": ["media", "import"],
+        "description": "Import photos from connected camera"
+    },
+    {
+        "label": "Keyboard Toggle",
+        "needs_sudo": false,
+        "path": "/home/ninja/apps/script_runner/bash/toggle_onboard",
+        "tags": ["hardware", "keyboard"],
+        "description": "Toggle the on-screen keyboard visibility"
+    },
+    {
+        "label": "Docker Watchtower",
+        "needs_sudo": false,
+        "path": "/home/ninja/apps/script_runner/bash/update_docker_images",
+        "tags": ["docker", "update"],
+        "description": "Automatically update all Docker containers"
+    },
+    {
+        "label": "Docker Prune",
+        "needs_sudo": false,
+        "path": "/home/ninja/apps/script_runner/bash/docker_image_prune",
+        "tags": ["docker", "cleanup"],
+        "description": "Remove unused Docker images"
+    },
+    {
+        "label": "Ollama Update",
+        "needs_sudo": true,
+        "path": "/home/ninja/apps/script_runner/bash/ollama_update",
+        "tags": ["ai", "ollama", "update"],
+        "description": "Update Ollama to the latest version"
+    },
+    {
+        "label": "Ollama Models Update",
+        "needs_sudo": false,
+        "path": "/home/ninja/apps/script_runner/bash/ollama_model_update",
+        "tags": ["ai", "ollama", "models", "update"],
+        "description": "Pull latest versions of installed Ollama models"
+    },
+    {
+        "label": "System Update",
+        "needs_sudo": true,
+        "path": "/home/ninja/apps/script_runner/bash/update_system",
+        "tags": ["system", "update"],
+        "description": "Full system package update and upgrade"
+    },
+    {
+        "label": "Clear System Logs",
+        "needs_sudo": true,
+        "path": "/home/ninja/apps/script_runner/bash/purge_logs",
+        "tags": ["system", "log", "cleanup"],
+        "description": "Safely clear old system logs"
+    },
+    {
+        "label": "System Monitor",
+        "needs_sudo": false,
+        "path": "/home/ninja/apps/script_runner/bash/system_monitor",
+        "tags": ["system", "monitoring"],
+        "description": "Open system monitor"
+    },
+    {
+        "label": "Open WebUI",
+        "needs_sudo": false,
+        "path": "/home/ninja/apps/script_runner/bash/openwebui",
+        "tags": ["ai", "ollama"],
+        "description": "Launch Ollama Web UI in Chromium browser"
+    },
+    {
+        "label": "Gmail",
+        "needs_sudo": false,
+        "path": "/home/ninja/apps/script_runner/bash/gmail",
+        "tags": ["web", "gmail"],
+        "description": "Open Gmail in Chromium browser"
+    },
+    {
+        "label": "Grok",
+        "needs_sudo": false,
+        "path": "/home/ninja/apps/script_runner/bash/grok",
+        "tags": ["web", "ai"],
+        "description": "Open Grok AI chat"
+    },
+    {
+        "label": "Edit Source",
+        "needs_sudo": false,
+        "path": "/home/ninja/apps/script_runner/bash/edit_source",
+        "tags": ["utility", "edit"],
+        "description": "Open this script runner source code for editing"
+    }
+]
