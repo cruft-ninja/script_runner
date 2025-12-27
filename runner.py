@@ -42,8 +42,6 @@ DEFAULT_MAX_CONCURRENT: int = 5                    # Default limit for simultane
 DEFAULT_DARK_MODE: bool = True                     # Start in dark mode by default
 
 # Tooltip and font constants
-TOOLTIP_BG: str = "#ffffc0"                        # Background color for tooltips (yellowish)
-TOOLTIP_FG: str = "#000000"                        # Foreground color for tooltips
 TOOLTIP_FONT: Tuple[str, int] = ("Helvetica", 11)  # Font for tooltips
 LOG_FONT: Tuple[str, int] = ("Consolas", 12)       # Monospace font for logs (good for output)
 LABEL_FONT: Tuple[str, int] = ("Helvetica", 12)    # Font for labels
@@ -99,7 +97,7 @@ class ToolTip:
         if self.tip:
             self.tip.destroy()
             self.tip = None
-            
+
 ######################################################################
 # Main Application Class
 ######################################################################
