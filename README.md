@@ -20,18 +20,11 @@ A modern, themed GUI application built with Python and Tkinter for running prede
 
 \- **Scratchpad Mode**: Built-in text editor for notes or quick edits.
 
-\## Screenshots
+## Screenshot
 
-*(Add screenshots here, e.g., main interface, dark mode, script running. Example placeholders:)*
-
-\- !\[Main Interface\](screenshots/main.png)
-
-\- !\[Dark Mode\](screenshots/dark-mode.png)
-
-\- !\[Script Output Tab\](screenshots/script-tab.png)
+![Screenshot of main window](screenshot.png?raw=true "Main Window")
 
 \## Requirements
-
 \- Python 3.6+ (tested on 3.12)
 
 \- Tkinter (usually included with Python)
