@@ -14,47 +14,64 @@ Features:
 Note: Requires `sv-ttk` package: pip install sv-ttk
 """
 
+######################################################################
+# Imports
+######################################################################
+
 import json
 import os
 import subprocess
 import threading
 import tkinter as tk
 from tkinter import ttk
-from tkfilebrowser import asksaveasfilename
-import sv_ttk  # Modern Sun Valley theme
+from tkfilebrowser import asksaveasfilename  # For file save dialog
+import sv_ttk  # Modern Sun Valley theme (provides Windows 11-like styling)
 from typing import List, Dict, Optional
 
-# Constants
-CONFIG_FILE = "scripts.json"
-BUTTONS_PER_ROW = 5
-GRID_PAD = 10
-LOG_LINES = 15
-DEFAULT_MAX_CONCURRENT = 5
-DEFAULT_DARK_MODE = True
-TOOLTIP_BG = "#ffffc0"
-TOOLTIP_FG = "#000000"
-TOOLTIP_FONT = ("Helvetica", 11)
-LOG_FONT = ("Consolas", 12)
-LABEL_FONT = ("Helvetica", 12)
 
+######################################################################
+# Constants
+######################################################################
+
+# Configuration and layout constants
+CONFIG_FILE = "scripts.json"                  # JSON file containing script definitions
+BUTTONS_PER_ROW = 5                           # How many buttons per row in the grid
+GRID_PAD = 10                                 # Padding around buttons in the grid
+LOG_LINES = 15                                # Default height (lines) for log/scratchpad text widgets
+DEFAULT_MAX_CONCURRENT = 5                    # Default limit for simultaneously running scripts
+DEFAULT_DARK_MODE = True                      # Start in dark mode by default
+
+# Tooltip and font constants
+TOOLTIP_BG = "#ffffc0"                        # Background color for tooltips (yellowish)
+TOOLTIP_FG = "#000000"                        # Foreground color for tooltips
+TOOLTIP_FONT = ("Helvetica", 11)              # Font for tooltips
+LOG_FONT = ("Consolas", 12)                   # Monospace font for logs (good for output)
+LABEL_FONT = ("Helvetica", 12)                # Font for labels
+
+
+######################################################################
+# ToolTip Class
+######################################################################
 
 class ToolTip:
-    """Theme-aware tooltip class."""
+    """Theme-aware tooltip class that shows a small popup when hovering over a widget."""
 
     def __init__(self, widget: tk.Widget, text: str):
-        self.widget = widget
-        self.text = text
-        self.tip: Optional[tk.Toplevel] = None
-        widget.bind("<Enter>", self.show)
-        widget.bind("<Leave>", self.hide)
+        self.widget = widget          # The widget to attach the tooltip to
+        self.text = text              # Text to display in the tooltip
+        self.tip: Optional[tk.Toplevel] = None  # The popup window (created on demand)
+        widget.bind("<Enter>", self.show)       # Show tooltip on mouse enter
+        widget.bind("<Leave>", self.hide)       # Hide tooltip on mouse leave
 
     def show(self, event=None):
-        if self.tip or not self.text:
+        """Create and position the tooltip window."""
+        if self.tip or not self.text:           # Avoid creating multiple tips
             return
+        # Position tooltip slightly offset from the widget
         x = self.widget.winfo_rootx() + 25
         y = self.widget.winfo_rooty() + self.widget.winfo_height() + 1
         self.tip = tk.Toplevel(self.widget)
-        self.tip.wm_overrideredirect(True)
+        self.tip.wm_overrideredirect(True)      # No window decorations
         self.tip.wm_geometry(f"+{x}+{y}")
         tk.Label(
             self.tip,
@@ -67,64 +84,84 @@ class ToolTip:
             font=TOOLTIP_FONT,
             padx=8,
             pady=4,
-            wraplength=300,
+            wraplength=300,                     # Wrap long text
         ).pack()
 
     def hide(self, event=None):
+        """Destroy the tooltip window."""
         if self.tip:
             self.tip.destroy()
             self.tip = None
 
 
+######################################################################
+# Main Application Class
+######################################################################
+
 class ScriptRunnerApp:
-    """Main application class for the Bash Script Runner GUI."""
+    """Main application class managing the entire GUI and script execution."""
+
+    ##################################################################
+    # Initialization
+    ##################################################################
 
     def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title("Bash Script Runner")
 
+        # Theme handling
         self.dark_mode = DEFAULT_DARK_MODE
-        sv_ttk.set_theme("dark" if self.dark_mode else "light")
+        sv_ttk.set_theme("dark" if self.dark_mode else "light")  # Apply initial theme
 
+        # Load script definitions from JSON
         self.scripts: List[Dict] = self.load_scripts()
-        self.path_to_label = {s["path"]: s["label"] for s in self.scripts}
-        self.running_scripts: Dict[str, bool] = {}
-        self.script_frames: Dict[str, ttk.Frame] = {}
-        self.script_texts: Dict[str, tk.Text] = {}
-        self.all_texts: List[tk.Text] = []
-        self.buttons: List[tuple[ttk.Button, str, List[str], str]] = []
+        self.path_to_label = {s["path"]: s["label"] for s in self.scripts}  # Quick lookup
 
+        # Runtime tracking
+        self.running_scripts: Dict[str, bool] = {}      # Tracks which scripts are currently running
+        self.script_frames: Dict[str, ttk.Frame] = {}   # Maps script path → tab frame
+        self.script_texts: Dict[str, tk.Text] = {}      # Maps script path → log text widget
+        self.all_texts: List[tk.Text] = []              # All text widgets (for global operations)
+        self.buttons: List[tuple[ttk.Button, str, List[str], str]] = []  # Button metadata for filtering
+
+        # UI variables
         self.max_concurrent_var = tk.IntVar(value=DEFAULT_MAX_CONCURRENT)
 
+        # Build the UI
         self.setup_ui()
 
     def load_scripts(self) -> List[Dict]:
-        """Load scripts from JSON config file."""
+        """Load the list of scripts from the JSON configuration file."""
         if not os.path.exists(CONFIG_FILE):
             raise FileNotFoundError(f"Config file {CONFIG_FILE} not found.")
         with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
+            return json.load(f)  # Expected format: list of dicts with keys: label, path, needs_sudo, tags, description
+
+    ##################################################################
+    # UI Setup
+    ##################################################################
 
     def setup_ui(self):
-        """Set up the main UI components."""
-        self.setup_log_notebook()
-        self.setup_controls_frame()
-        self.setup_filter_frame()
-        self.setup_button_grid()
-        self.apply_filters()
+        """Initialize and layout all major UI components."""
+        self.setup_log_notebook()      # Console, Scratchpad, and script tabs
+        self.setup_controls_frame()    # Save, close, clear, settings buttons
+        self.setup_filter_frame()      # Search and tag filtering
+        self.setup_button_grid()       # Grid of script launcher buttons
+        self.apply_filters()           # Initial filter application
 
+        # Adjust window size after layout
         self.root.update_idletasks()
         self.root.geometry(f"{max(self.root.winfo_width(), 900)}x{self.root.winfo_reqheight()}")
-        self.search_entry.focus_set()
+        self.search_entry.focus_set()  # Focus on search box at startup
 
     def setup_log_notebook(self):
-        """Set up the log notebook with console and scratchpad."""
+        """Create the tabbed notebook containing Console, Scratchpad, and per-script logs."""
         self.log_notebook = ttk.Notebook(self.root)
         self.log_notebook.pack(fill="both", expand=True, padx=15, pady=15)
-        self.log_notebook.bind("<<NotebookTabChanged>>", self.on_tab_change)
-        self.log_notebook.bind("<B1-Motion>", self.reorder_tab)
+        self.log_notebook.bind("<<NotebookTabChanged>>", self.on_tab_change)   # Update close button state
+        self.log_notebook.bind("<B1-Motion>", self.reorder_tab)                # Drag-to-reorder tabs
 
-        # Main log
+        # Main Console tab (global log)
         main_log_frame = ttk.Frame(self.log_notebook)
         self.main_log_text = tk.Text(
             main_log_frame, height=LOG_LINES, font=LOG_FONT, wrap="word", undo=True, state="disabled"
@@ -137,7 +174,7 @@ class ScriptRunnerApp:
         self.main_log_text.config(yscrollcommand=main_scrollbar.set)
         self.log_notebook.add(main_log_frame, text="Console")
 
-        # Scratchpad
+        # Scratchpad tab (free-form editable text area)
         scratch_frame = ttk.Frame(self.log_notebook)
         self.scratch_text = tk.Text(
             scratch_frame, height=LOG_LINES, font=LOG_FONT, wrap="word", undo=True, state="normal"
@@ -153,26 +190,30 @@ class ScriptRunnerApp:
         self.all_texts = [self.main_log_text, self.scratch_text]
 
     def setup_controls_frame(self):
-        """Set up the controls frame with buttons and settings."""
+        """Create the bottom control bar with action buttons and settings."""
         self.controls_frame = ttk.Frame(self.root)
         self.controls_frame.pack(pady=(0, 10))
 
+        # Save current tab content
         save_btn = ttk.Button(self.controls_frame, text="Save Current Tab", command=self.save_current_tab)
         save_btn.pack(side="left", padx=10)
         ToolTip(save_btn, "Save current tab content to a file")
 
+        # Close current script tab
         self.close_btn = ttk.Button(
             self.controls_frame, text="Close Current Tab", command=self.close_current_tab
         )
         self.close_btn.pack(side="left", padx=10)
         ToolTip(self.close_btn, "Close the current script tab (if not running)")
 
+        # Clear all finished script tabs
         clear_tabs_btn = ttk.Button(
             self.controls_frame, text="Clear Tabs", command=self.close_finished_tabs
         )
         clear_tabs_btn.pack(side="left", padx=10)
         ToolTip(clear_tabs_btn, "Close all script tabs that have finished running")
 
+        # Max concurrent scripts setting
         ttk.Label(self.controls_frame, text="Max Concurrent:").pack(side="left", padx=10)
         max_concurrent_spin = ttk.Spinbox(
             self.controls_frame,
@@ -184,6 +225,7 @@ class ScriptRunnerApp:
         max_concurrent_spin.pack(side="left", padx=10)
         ToolTip(max_concurrent_spin, "Set the maximum number of concurrent script executions (1-20)")
 
+        # Theme toggle button
         dark_btn = ttk.Button(
             self.controls_frame,
             text="Disable Dark Mode" if self.dark_mode else "Enable Dark Mode",
@@ -193,7 +235,7 @@ class ScriptRunnerApp:
         ToolTip(dark_btn, "Switch between light and dark theme")
 
     def setup_filter_frame(self):
-        """Set up the filter frame for search and tags."""
+        """Create search and tag filter controls."""
         self.filter_frame = ttk.Frame(self.root)
         self.filter_frame.pack(pady=10, padx=50, fill="x")
 
@@ -204,13 +246,14 @@ class ScriptRunnerApp:
         )
         self.search_entry.pack(side="left", padx=10, fill="x", expand=True)
 
+        # Clear search button
         clear_search_btn = ttk.Button(
             self.filter_frame, text="✖", command=lambda: self.search_var.set(""), width=3
         )
         clear_search_btn.pack(side="left")
 
+        # Tag filter dropdown
         ttk.Label(self.filter_frame, text="Tag:", font=LABEL_FONT).pack(side="left", padx=(20, 0))
-
         all_tags = sorted({t for s in self.scripts for t in s["tags"]})
         self.tag_var = tk.StringVar(value="All Tags")
         tag_menu = ttk.OptionMenu(
@@ -218,17 +261,20 @@ class ScriptRunnerApp:
         )
         tag_menu.pack(side="left", padx=10, fill="x", expand=True)
 
+        # React to changes in search or tag
         self.search_var.trace("w", self.apply_filters)
         self.tag_var.trace("w", self.apply_filters)
 
     def setup_button_grid(self):
-        """Set up the button grid for scripts."""
+        """Create the grid of script launcher buttons."""
         self.btn_frame = ttk.Frame(self.root)
         self.btn_frame.pack(pady=10)
 
+        # Configure grid columns to expand evenly
         for i in range(BUTTONS_PER_ROW):
             self.btn_frame.grid_columnconfigure(i, weight=1)
 
+        # Create a button for each script
         for script in self.scripts:
             label = script["label"]
             path = script["path"]
@@ -242,11 +288,16 @@ class ScriptRunnerApp:
                 width=18,
                 command=lambda p=path, ns=needs_sudo: self.run_script(p, ns),
             )
-            ToolTip(btn, tip)
+            ToolTip(btn, tip)  # Attach description as tooltip
+            # Store button and metadata for filtering
             self.buttons.append((btn, label.lower(), [t.lower() for t in tags], path))
 
+    ##################################################################
+    # Filtering and Theme
+    ##################################################################
+
     def apply_filters(self, *args):
-        """Apply search and tag filters to buttons."""
+        """Show/hide buttons based on current search term and selected tag."""
         term = self.search_var.get().lower()
         tag = self.tag_var.get().lower() if self.tag_var.get() != "All Tags" else None
         visible = []
@@ -256,6 +307,7 @@ class ScriptRunnerApp:
                 visible.append(btn)
             else:
                 btn.grid_remove()
+        # Re-grid visible buttons
         for i, btn in enumerate(visible):
             btn.grid(
                 row=i // BUTTONS_PER_ROW,
@@ -264,16 +316,21 @@ class ScriptRunnerApp:
                 pady=GRID_PAD,
                 sticky="ew",
             )
+        # Resize window to fit content
         self.root.update_idletasks()
         self.root.geometry(f"{self.root.winfo_width()}x{self.root.winfo_reqheight()}")
 
     def toggle_dark_mode(self):
-        """Toggle between dark and light themes."""
+        """Switch between dark and light themes and update button text."""
         self.dark_mode = not self.dark_mode
         sv_ttk.set_theme("dark" if self.dark_mode else "light")
 
+    ##################################################################
+    # Logging and Tab Management
+    ##################################################################
+
     def log(self, msg: str, target: tk.Text = None):
-        """Log a message to the specified text widget."""
+        """Thread-safe logging to a text widget (defaults to main console)."""
         if target is None:
             target = self.main_log_text
 
@@ -284,12 +341,12 @@ class ScriptRunnerApp:
             target.insert("end", msg + "\n")
             if was_disabled:
                 target.config(state="disabled")
-            target.see("end")
+            target.see("end")  # Auto-scroll to bottom
 
-        self.root.after(0, _write)
+        self.root.after(0, _write)  # Schedule on main thread
 
     def clear_current_tab(self):
-        """Clear the content of the current tab."""
+        """Clear all content in the currently selected tab."""
         current_tab = self.log_notebook.select()
         if not current_tab:
             return
@@ -307,7 +364,7 @@ class ScriptRunnerApp:
             text_widget.config(state="disabled")
 
     def save_current_tab(self):
-        """Save the content of the current tab to a file."""
+        """Save the content of the current tab to a user-chosen file."""
         current_tab = self.log_notebook.select()
         if not current_tab:
             return
@@ -339,7 +396,7 @@ class ScriptRunnerApp:
             self.log(f"[ERROR] Failed to save: {e}")
 
     def close_current_tab(self):
-        """Close the current script tab if not running."""
+        """Close the currently selected script tab if it's not running."""
         current_tab = self.log_notebook.select()
         if not current_tab:
             return
@@ -357,11 +414,11 @@ class ScriptRunnerApp:
         del self.script_frames[path]
         text = self.script_texts.pop(path)
         self.all_texts.remove(text)
-        self.log_notebook.select(self.log_notebook.nametowidget(".!notebook.!frame"))
+        self.log_notebook.select(self.log_notebook.nametowidget(".!notebook.!frame"))  # Select Console
         self.log(f"[INFO] Closed tab: {tab_text}")
 
     def close_finished_tabs(self):
-        """Close all finished script tabs."""
+        """Close all script tabs that have completed execution."""
         to_close = []
         for path, frame in list(self.script_frames.items()):
             text = self.script_texts[path]
@@ -381,7 +438,7 @@ class ScriptRunnerApp:
         self.log_notebook.select(self.log_notebook.nametowidget(".!notebook.!frame"))
 
     def on_tab_change(self, event):
-        """Handle tab change to enable/disable close button."""
+        """Enable/disable the close button based on the selected tab."""
         current_tab = self.log_notebook.select()
         if not current_tab:
             self.close_btn.config(state="disabled")
@@ -392,15 +449,19 @@ class ScriptRunnerApp:
         )
 
     def reorder_tab(self, event):
-        """Reorder tabs via drag-and-drop."""
+        """Allow reordering tabs by dragging with the mouse."""
         try:
             index = self.log_notebook.index(f"@{event.x},{event.y}")
             self.log_notebook.insert(index, child=self.log_notebook.select())
         except tk.TclError:
-            pass
+            pass  # Ignore invalid drag positions
+
+    ##################################################################
+    # Sudo Password Dialog
+    ##################################################################
 
     def ask_password(self) -> Optional[str]:
-        """Prompt for sudo password in a themed dialog."""
+        """Display a modal dialog to collect sudo password when needed."""
         dialog = tk.Toplevel(self.root)
         dialog.title("Sudo Password")
         dialog.transient(self.root)
@@ -442,8 +503,12 @@ class ScriptRunnerApp:
         self.root.wait_window(dialog)
         return result[0]
 
+    ##################################################################
+    # Script Execution
+    ##################################################################
+
     def set_button_state(self, path: str, state: str):
-        """Set the state of a script button."""
+        """Enable or disable the launcher button for a specific script."""
         for btn_data in self.buttons:
             btn, _, _, btn_path = btn_data
             if btn_path == path:
@@ -451,22 +516,26 @@ class ScriptRunnerApp:
                 break
 
     def run_script(self, path: str, needs_sudo: bool):
-        """Run a bash script in a separate thread."""
+        """Launch a script, handling concurrency, sudo, and logging."""
+        # Concurrency check
         if len(self.running_scripts) >= self.max_concurrent_var.get():
             self.log("[WARN] Maximum concurrent scripts reached. Please wait.")
             return
         if path in self.running_scripts and self.running_scripts[path]:
             self.log("[WARN] This script is already running. Please wait.")
             return
+
         self.running_scripts[path] = True
         self.set_button_state(path, "disabled")
 
+        # Special internal command handling (e.g., clear log)
         if path == "Clear Log":
             self.clear_current_tab()
             self.running_scripts.pop(path, None)
             self.set_button_state(path, "normal")
             return
 
+        # Resolve full script path
         full_path = os.path.join(os.path.dirname(__file__), path)
         if not os.path.exists(full_path):
             self.log(f"[ERROR] Script not found: {full_path}")
@@ -474,6 +543,7 @@ class ScriptRunnerApp:
             self.set_button_state(path, "normal")
             return
 
+        # Create a dedicated tab for this script if it doesn't exist
         if path not in self.script_texts:
             frame = ttk.Frame(self.log_notebook)
             text = tk.Text(
@@ -491,11 +561,13 @@ class ScriptRunnerApp:
 
         target = self.script_texts[path]
         frame = self.script_frames[path]
-        self.log_notebook.select(frame)
+        self.log_notebook.select(frame)  # Switch to this script's tab
 
+        # Log start separator
         self.log("\n" + "#" * 50, target=target)
         self.log(f"[INFO] Running: {full_path}", target=target)
 
+        # Handle sudo password if required
         password = None
         if needs_sudo:
             try:
@@ -508,11 +580,12 @@ class ScriptRunnerApp:
             if not sudo_cached:
                 password = self.ask_password()
                 if password is None:
-                    self.log("[WARN] Aborted by user.")
+                    self.log("[WARN] Aborted by user.", target=target)
                     self.running_scripts.pop(path, None)
                     self.set_button_state(path, "normal")
                     return
 
+        # Build command
         if needs_sudo:
             cmd = (
                 ["sudo", "-S" if password else "", "bash", full_path]
@@ -524,6 +597,7 @@ class ScriptRunnerApp:
             cmd = ["bash", full_path]
 
         try:
+            # Start subprocess
             proc = subprocess.Popen(
                 cmd,
                 stdin=subprocess.PIPE if password else None,
@@ -532,21 +606,24 @@ class ScriptRunnerApp:
                 text=True,
                 cwd=os.path.dirname(full_path or "."),
             )
+            # Send password immediately if needed
             if password:
                 proc.stdin.write(password + "\n")  # type: ignore
                 proc.stdin.close()  # type: ignore
 
+            # Stream readers (run in separate threads)
             def read_stream(stream, prefix: str, tgt: tk.Text):
                 for line in iter(stream.readline, ""):
                     self.log(f"[{prefix}] {line.rstrip()}", target=tgt)
 
             threading.Thread(
-                target=read_stream, args=(proc.stdout, "OUT", target), daemon=True  # type: ignore
+                target=read_stream, args=(proc.stdout, "OUT", target), daemon=True
             ).start()
             threading.Thread(
-                target=read_stream, args=(proc.stderr, "ERR", target), daemon=True  # type: ignore
+                target=read_stream, args=(proc.stderr, "ERR", target), daemon=True
             ).start()
 
+            # Completion handler
             def done(tgt: tk.Text, pth: str):
                 proc.wait()
                 status = "DONE" if proc.returncode == 0 else f"FAIL ({proc.returncode})"
@@ -558,10 +635,14 @@ class ScriptRunnerApp:
             threading.Thread(target=done, args=(target, path), daemon=True).start()
 
         except Exception as e:
-            self.log(f"[ERROR] {e}")
+            self.log(f"[ERROR] {e}", target=target)
             self.running_scripts.pop(path, None)
             self.set_button_state(path, "normal")
 
+
+######################################################################
+# Application Entry Point
+######################################################################
 
 if __name__ == "__main__":
     root = tk.Tk()
