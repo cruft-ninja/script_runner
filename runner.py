@@ -14,10 +14,6 @@ Features:
 Note: Requires `sv-ttk` package: pip install sv-ttk
 """
 
-######################################################################
-# Imports
-######################################################################
-
 import json
 import os
 import subprocess
@@ -29,29 +25,19 @@ import sv_ttk  # Modern Sun Valley theme (provides Windows 11-like styling)
 from typing import List, Dict, Optional
 
 
-######################################################################
-# Constants
-######################################################################
-
-# Configuration and layout constants
+# Constants for configuration and layout
 CONFIG_FILE = "scripts.json"                  # JSON file containing script definitions
 BUTTONS_PER_ROW = 5                           # How many buttons per row in the grid
 GRID_PAD = 10                                 # Padding around buttons in the grid
 LOG_LINES = 15                                # Default height (lines) for log/scratchpad text widgets
 DEFAULT_MAX_CONCURRENT = 5                    # Default limit for simultaneously running scripts
 DEFAULT_DARK_MODE = True                      # Start in dark mode by default
-
-# Tooltip and font constants
 TOOLTIP_BG = "#ffffc0"                        # Background color for tooltips (yellowish)
 TOOLTIP_FG = "#000000"                        # Foreground color for tooltips
 TOOLTIP_FONT = ("Helvetica", 11)              # Font for tooltips
 LOG_FONT = ("Consolas", 12)                   # Monospace font for logs (good for output)
 LABEL_FONT = ("Helvetica", 12)                # Font for labels
 
-
-######################################################################
-# ToolTip Class
-######################################################################
 
 class ToolTip:
     """Theme-aware tooltip class that shows a small popup when hovering over a widget."""
@@ -94,16 +80,8 @@ class ToolTip:
             self.tip = None
 
 
-######################################################################
-# Main Application Class
-######################################################################
-
 class ScriptRunnerApp:
     """Main application class managing the entire GUI and script execution."""
-
-    ##################################################################
-    # Initialization
-    ##################################################################
 
     def __init__(self, root: tk.Tk):
         self.root = root
@@ -136,10 +114,6 @@ class ScriptRunnerApp:
             raise FileNotFoundError(f"Config file {CONFIG_FILE} not found.")
         with open(CONFIG_FILE, "r", encoding="utf-8") as f:
             return json.load(f)  # Expected format: list of dicts with keys: label, path, needs_sudo, tags, description
-
-    ##################################################################
-    # UI Setup
-    ##################################################################
 
     def setup_ui(self):
         """Initialize and layout all major UI components."""
@@ -292,10 +266,6 @@ class ScriptRunnerApp:
             # Store button and metadata for filtering
             self.buttons.append((btn, label.lower(), [t.lower() for t in tags], path))
 
-    ##################################################################
-    # Filtering and Theme
-    ##################################################################
-
     def apply_filters(self, *args):
         """Show/hide buttons based on current search term and selected tag."""
         term = self.search_var.get().lower()
@@ -324,10 +294,6 @@ class ScriptRunnerApp:
         """Switch between dark and light themes and update button text."""
         self.dark_mode = not self.dark_mode
         sv_ttk.set_theme("dark" if self.dark_mode else "light")
-
-    ##################################################################
-    # Logging and Tab Management
-    ##################################################################
 
     def log(self, msg: str, target: tk.Text = None):
         """Thread-safe logging to a text widget (defaults to main console)."""
@@ -456,10 +422,6 @@ class ScriptRunnerApp:
         except tk.TclError:
             pass  # Ignore invalid drag positions
 
-    ##################################################################
-    # Sudo Password Dialog
-    ##################################################################
-
     def ask_password(self) -> Optional[str]:
         """Display a modal dialog to collect sudo password when needed."""
         dialog = tk.Toplevel(self.root)
@@ -502,10 +464,6 @@ class ScriptRunnerApp:
 
         self.root.wait_window(dialog)
         return result[0]
-
-    ##################################################################
-    # Script Execution
-    ##################################################################
 
     def set_button_state(self, path: str, state: str):
         """Enable or disable the launcher button for a specific script."""
@@ -640,10 +598,7 @@ class ScriptRunnerApp:
             self.set_button_state(path, "normal")
 
 
-######################################################################
-# Application Entry Point
-######################################################################
-
+# Application entry point
 if __name__ == "__main__":
     root = tk.Tk()
     app = ScriptRunnerApp(root)
