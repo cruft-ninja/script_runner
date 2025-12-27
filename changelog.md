@@ -1,4 +1,3 @@
-Here is the updated `changelog.md` with all recent sudo password dialog improvements merged into a single, clean entry under a new version. This keeps the changelog concise while accurately reflecting the cumulative enhancements.
 
 ```markdown
 # Changelog
