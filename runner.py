@@ -23,11 +23,11 @@ import os
 import subprocess
 import threading
 import tkinter as tk
-from tkinter import ttk
-from tkfilebrowser import asksaveasfilename  # For file save dialog
 import sv_ttk  # Modern Sun Valley theme (provides Windows 11-like styling)
+from tkinter import ttk
+from tkinter import messagebox
+from tkfilebrowser import asksaveasfilename  # For file save dialog
 from typing import List, Dict, Optional, Tuple, Any
-
 
 ######################################################################
 # Constants
@@ -108,6 +108,7 @@ class ScriptRunnerApp:
     def __init__(self, root: tk.Tk) -> None:
         self.root: tk.Tk = root
         self.root.title("Bash Script Runner")
+        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
 
         # Theme handling
         self.dark_mode: bool = DEFAULT_DARK_MODE
@@ -461,7 +462,24 @@ class ScriptRunnerApp:
         self.close_btn.config(
             state="normal" if tab_text not in ["Console", "Scratchpad"] else "disabled"
         )
+    def on_close(self) -> None:
+        """Handle window close event: prompt if scripts are running."""
+        running = [self.path_to_label.get(p, os.path.basename(p)) for p, r in self.running_scripts.items() if r]
+        if running:
+            script_list = "\n".join(running)
+            confirm = messagebox.askyesno(
+                "Scripts Running",
+                f"The following scripts are still running:\n\n{script_list}\n\n"
+                "Closing the application will terminate them immediately.\n"
+                "Do you want to proceed?",
+                icon="warning"
+            )
+            if not confirm:
+                return  # Cancel close
+            # Optional: gracefully terminate running subprocesses here if you track proc objects
+            # (Current code doesn't store proc, so they die with the app anyway)
 
+        self.root.destroy()  # Proceed with close
     def reorder_tab(self, event: tk.Event) -> None:
         """Allow reordering tabs by dragging with the mouse."""
         try:

@@ -1,3 +1,6 @@
+Here is the updated `changelog.md` with all recent sudo password dialog improvements merged into a single, clean entry under a new version. This keeps the changelog concise while accurately reflecting the cumulative enhancements.
+
+```markdown
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -53,3 +56,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tooltips for script descriptions and controls.
 - Tab management features: save, close, reorder, and auto-clear finished tabs.
 - Dynamic button grid with responsive layout.
+```
+
