@@ -121,4 +121,8 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) for detai
 - Built with [Tkinter](https://docs.python.org/3/library/tkinter.html) and [sv-ttk](https://github.com/rdbende/Sun-Valley-ttk-theme).
 
 - Inspired by simple script automation needs for developers and sysadmins.
+<<<<<<< HEAD
 ```
+=======
+```
+>>>>>>> 596fb130095fd6b9e8b8d6f1dd38b3a6358293f7

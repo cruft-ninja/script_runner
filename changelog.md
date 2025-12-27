@@ -76,4 +76,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tooltips for script descriptions and controls.
 - Tab management features: save, close, reorder, and auto-clear finished tabs.
 - Dynamic button grid with responsive layout.
+<<<<<<< HEAD
 ```
+=======
+```
+>>>>>>> 596fb130095fd6b9e8b8d6f1dd38b3a6358293f7
