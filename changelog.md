@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2025-12-27
+
+### Improved
+- Enhanced the sudo password dialog with better usability and validation:
+  - "OK" button is now the default button (visually highlighted and triggered by Enter/Numpad Enter regardless of focus).
+  - Added support for Enter, Numpad Enter, and Escape keys for submission/cancellation.
+  - Implemented validation to prevent submission of empty passwords, displaying a clear warning message while keeping the dialog open and focused on the entry field.
+  - Minor layout improvements (consistent sizing, resizable disabled, better padding).
+
 ## [1.3.0] - 2025-12-27
 
 ### Fixed

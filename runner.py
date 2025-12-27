@@ -481,38 +481,59 @@ class ScriptRunnerApp:
         dialog.transient(self.root)
         dialog.grab_set()
         dialog.geometry(
-            f"400x180+{self.root.winfo_rootx()+200}+{self.root.winfo_rooty()+150}"
+            f"400x200+{self.root.winfo_rootx()+200}+{self.root.winfo_rooty()+150}"
         )
+        dialog.resizable(False, False)
 
-        ttk.Label(dialog, text="Enter your sudo password:", font=LABEL_FONT).pack(pady=20)
+        ttk.Label(dialog, text="Enter your sudo password:", font=LABEL_FONT).pack(pady=(20, 10))
 
         pw_var: tk.StringVar = tk.StringVar()
         entry: ttk.Entry = ttk.Entry(dialog, textvariable=pw_var, show="*", width=30, font=LABEL_FONT)
         entry.pack(pady=5, padx=40, fill="x")
-        entry.focus()
+        entry.focus_set()
+
+        # Warning label for empty password
+        warning_label: ttk.Label = ttk.Label(dialog, text="", foreground="red")
+        warning_label.pack(pady=(0, 10))
 
         show_var: tk.BooleanVar = tk.BooleanVar()
 
         def toggle_show() -> None:
             entry.config(show="" if show_var.get() else "*")
 
-        ttk.Checkbutton(dialog, text="Show password", variable=show_var, command=toggle_show).pack(
-            pady=5
-        )
+        ttk.Checkbutton(dialog, text="Show password", variable=show_var, command=toggle_show).pack(pady=5)
 
         result: List[Optional[str]] = [None]
 
         def ok() -> None:
-            result[0] = pw_var.get()
+            password: str = pw_var.get().strip()
+            if not password:
+                warning_label.config(text="Password cannot be empty.")
+                entry.focus_set()
+                return
+            warning_label.config(text="")  # Clear any previous warning
+            result[0] = password
             dialog.destroy()
 
         def cancel() -> None:
+            result[0] = None
             dialog.destroy()
 
         btn_frame: ttk.Frame = ttk.Frame(dialog)
-        btn_frame.pack(pady=10)
-        ttk.Button(btn_frame, text="OK", command=ok).pack(side="left", padx=10)
-        ttk.Button(btn_frame, text="Cancel", command=cancel).pack(side="right", padx=10)
+        btn_frame.pack(pady=15)
+
+        ok_btn = ttk.Button(btn_frame, text="OK", command=ok)
+        ok_btn.pack(side="left", padx=15)
+
+        cancel_btn = ttk.Button(btn_frame, text="Cancel", command=cancel)
+        cancel_btn.pack(side="right", padx=15)
+
+        # Default button and key bindings
+        ok_btn.configure(default="active")
+        dialog.protocol("WM_DELETE_WINDOW", cancel)
+        dialog.bind("<Return>", lambda event: ok())
+        dialog.bind("<KP_Enter>", lambda event: ok())
+        dialog.bind("<Escape>", lambda event: cancel_btn.invoke())
 
         self.root.wait_window(dialog)
         return result[0]
