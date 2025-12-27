@@ -1,4 +1,3 @@
-<DOCUMENT filename="README.md">
 ```markdown
 # Bash Script Runner GUI
 
@@ -123,4 +122,3 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) for detai
 
 - Inspired by simple script automation needs for developers and sysadmins.
 ```
-</DOCUMENT>

@@ -1,4 +1,3 @@
-<DOCUMENT filename="changelog.md">
 ```markdown
 # Changelog
 
@@ -78,4 +77,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tab management features: save, close, reorder, and auto-clear finished tabs.
 - Dynamic button grid with responsive layout.
 ```
-</DOCUMENT>
