@@ -1,4 +1,3 @@
-<DOCUMENT filename="changelog.md">
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -7,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.3.0] - 2025-12-27
+
+### Fixed
+- Resolved a critical bug in tab management where closing script tabs or clearing finished tabs could cause a `TclError` due to reliance on a hardcoded widget path (`.!notebook.!frame`) that becomes invalid after tab reordering or removal.
+- Stored a direct reference to the Console tab frame during setup and updated `close_current_tab` and `close_finished_tabs` to select it reliably, ensuring robustness with drag-to-reorder functionality.
 
 ## [1.2.0] - 2025-12-27
 
@@ -39,4 +44,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tooltips for script descriptions and controls.
 - Tab management features: save, close, reorder, and auto-clear finished tabs.
 - Dynamic button grid with responsive layout.
-</DOCUMENT>
