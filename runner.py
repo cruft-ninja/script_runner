@@ -48,7 +48,6 @@ TOOLTIP_FONT: Tuple[str, int] = ("Helvetica", 11)  # Font for tooltips
 LOG_FONT: Tuple[str, int] = ("Consolas", 12)       # Monospace font for logs (good for output)
 LABEL_FONT: Tuple[str, int] = ("Helvetica", 12)    # Font for labels
 
-
 ######################################################################
 # ToolTip Class
 ######################################################################
@@ -67,6 +66,14 @@ class ToolTip:
         """Create and position the tooltip window."""
         if self.tip or not self.text:           # Avoid creating multiple tips
             return
+        # Determine colors based on current theme
+        theme = sv_ttk.get_theme()
+        if theme == "dark":
+            bg = "#2d2d2d"
+            fg = "#ffffff"
+        else:
+            bg = "#ffffe0"
+            fg = "#000000"
         # Position tooltip slightly offset from the widget
         x: int = self.widget.winfo_rootx() + 25
         y: int = self.widget.winfo_rooty() + self.widget.winfo_height() + 1
@@ -77,8 +84,8 @@ class ToolTip:
             self.tip,
             text=self.text,
             justify="left",
-            background=TOOLTIP_BG,
-            foreground=TOOLTIP_FG,
+            background=bg,
+            foreground=fg,
             relief="solid",
             borderwidth=1,
             font=TOOLTIP_FONT,
@@ -92,8 +99,7 @@ class ToolTip:
         if self.tip:
             self.tip.destroy()
             self.tip = None
-
-
+            
 ######################################################################
 # Main Application Class
 ######################################################################

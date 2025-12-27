@@ -1,99 +1,66 @@
-# Bash Script Runner GUI
+<DOCUMENT filename="changelog.md">
 
-A modern, themed GUI application built with Python and Tkinter for running predefined bash scripts. It features a clean interface with light/dark mode support using the Sun Valley ttk theme (sv-ttk). Ideal for managing routine tasks like system updates, Docker management, AI model updates, and more.
+```markdown
+# Changelog
 
-## Features
+All notable changes to this project will be documented in this file.
 
-- **Modern Theming**: Supports dark and light modes with sv-ttk for a sleek, Windows 11-inspired look.
-- **Script Management**: Predefined list of bash scripts with tags for easy filtering and searching.
-- **Concurrent Execution**: Run multiple scripts simultaneously with a configurable limit (default: 5).
-- **Tabbed Logging**: Dedicated tabs for console output, scratchpad, and individual script logs.
-- **Sudo Support**: Secure password prompt for scripts requiring elevated privileges.
-- **Tooltips and Filtering**: Hover tooltips for script descriptions; search by name or tag.
-- **Tab Management**: Save, close, and reorder tabs; auto-close finished script tabs.
-- **Scratchpad Mode**: Built-in text editor for notes or quick edits.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Screenshot
+## [Unreleased]
 
-![Screenshot of main window](screenshot.png?raw=true "Main Window")
+## [1.5.0] - 2025-12-27
 
-## Requirements
-- Python 3.6+ (tested on 3.12)
-- Tkinter (usually included with Python)
-- sv-ttk: `pip install sv-ttk`
-- Linux environment (due to bash scripts and sudo usage)
-- Optional: Dependencies for specific scripts (e.g., Docker, Ollama)
+### Improved
+- Adapted tooltips to dynamically change background and foreground colors based on the current dark/light theme for improved visibility and consistency.
 
-## Installation
+## [1.4.0] - 2025-12-27
 
-1. Clone the repository:
+### Improved
+- Enhanced the sudo password dialog with better usability and validation:
+  - "OK" button is now the default button (visually highlighted and triggered by Enter/Numpad Enter regardless of focus).
+  - Added support for Enter, Numpad Enter, and Escape keys for submission/cancellation.
+  - Implemented validation to prevent submission of empty passwords, displaying a clear warning message while keeping the dialog open and focused on the entry field.
+  - Minor layout improvements (consistent sizing, resizable disabled, better padding).
 
-   ```
-   git clone https://github.com/yourusername/bash-script-runner-gui.git
-   cd bash-script-runner-gui
-   ```
+## [1.3.0] - 2025-12-27
 
-2. Install dependencies:
+### Fixed
+- Resolved a critical bug in tab management where closing script tabs or clearing finished tabs could cause a `TclError` due to reliance on a hardcoded widget path (`.!notebook.!frame`) that becomes invalid after tab reordering or removal.
+- Stored a direct reference to the Console tab frame during setup and updated `close_current_tab` and `close_finished_tabs` to select it reliably, ensuring robustness with drag-to-reorder functionality.
 
-   ```
-   pip install sv-ttk
-   ```
+## [1.2.0] - 2025-12-27
 
-3. Create or edit the `scripts.json` file in the project directory to define your scripts (see Configuration section for format). Ensure the bash scripts referenced in `scripts.json` exist in the specified paths (e.g., relative to the project directory like `bash/update.sh`). Customize paths as needed. If `scripts.json` is missing, the app will raise an error on startup—create it with at least an empty array `[]` to begin.
+### Changed
+- Updated script paths in `scripts.json` to be relative to the application directory.
+- Modified `runner.py` to resolve script paths using `os.path.join(os.path.dirname(__file__), path)` for improved portability and easier deployment across different environments.
 
-4. Run the application:
+## [1.1.0] - 2025-12-27
 
-   ```
-   python runner.py
-   ```
+### Changed
+- Refactored code for improved maintainability:
+  - Modularized the script into smaller functions and a main `ScriptRunnerApp` class to encapsulate logic.
+  - Separated script configurations into an external `scripts.json` file for easier editing and extensibility without modifying code.
+  - Defined constants for magic numbers and strings at the top of the file.
+  - Added type hints and docstrings for better readability and IDE support.
+  - Improved error handling with more robust try-except blocks and logging.
+  - Ensured code style compliance with PEP8, including consistent spacing and shorter lines.
+  - Enabled dynamic loading of scripts from JSON at runtime.
+  - Simplified theme handling and UI setup.
 
-## Usage
+## [1.0.0] - 2025-12-27
 
-- Launch the app: `python runner.py`
-- **Search and Filter**: Use the search bar for script names or the tag dropdown for categories (e.g., "docker", "ai").
-- **Run a Script**: Click a button to execute. Scripts with sudo requirements will prompt for a password.
-- **Monitor Output**: Output appears in dedicated tabs. Use the console for general logs.
-- **Scratchpad**: Edit plain text in the "Scratchpad" tab.
-- **Controls**:
-  - Save current tab content to a file.
-  - Close individual or finished tabs.
-  - Toggle dark/light mode.
-  - Set max concurrent scripts (1-20).
-- **Clear Log**: Quickly clear the current tab's content.
-
-## Configuration
-
-Edit the `scripts.json` file to add/remove scripts. It should be a JSON array of objects, each with the following keys:
-
-```json
-[
-    {
-        "label": "Update System",
-        "path": "bash/update.sh",
-        "needs_sudo": true,
-        "tags": ["system", "update"],
-        "description": "Performs system updates"
-    },
-    // Add more here...
-]
+### Added
+- Initial release of the Bash Script Runner GUI application.
+- Modern dark/light theming using sv-ttk (Sun Valley ttk theme).
+- Predefined bash scripts with tagging, filtering, and search functionality.
+- Concurrent script execution with configurable limits.
+- Tabbed interface for console logs, scratchpad, and individual script outputs.
+- Secure sudo password dialog for elevated privilege scripts.
+- Tooltips for script descriptions and controls.
+- Tab management features: save, close, reorder, and auto-clear finished tabs.
+- Dynamic button grid with responsive layout.
 ```
 
-- `label`: The button text displayed in the GUI.
-- `path`: The path to the script, relative to the directory of `runner.py`.
-- `needs_sudo`: Set to `true` for scripts requiring elevated privileges.
-- `tags`: An array used for filtering (e.g., ["system", "update"]).
-- `description`: The tooltip text shown on hover.
-- Adjust `BUTTONS_PER_ROW`, `GRID_PAD`, and `LOG_LINES` constants in `runner.py` for layout preferences.
-
-## Contributing
-
-Contributions are welcome! Fork the repo, make changes, and submit a pull request. Ensure code follows PEP8 and test on Linux.
-
-## License
-
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
-
-## Acknowledgments
-
-- Built with [Tkinter](https://docs.python.org/3/library/tkinter.html) and [sv-ttk](https://github.com/rdbende/Sun-Valley-ttk-theme).
-- Inspired by simple script automation needs for developers and sysadmins.
+</DOCUMENT>
