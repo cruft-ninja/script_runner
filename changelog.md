@@ -1,4 +1,4 @@
-
+<DOCUMENT filename="changelog.md">
 ```markdown
 # Changelog
 
@@ -8,6 +8,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.6.1] - 2025-12-27
+
+### Fixed
+- Corrected indentation error in `run_script` method for scrollbar creation, resolving a syntax issue.
+- Fixed `NameError` in `run_script` when attempting to reuse existing tabs by properly handling frame and text retrieval.
+- Enabled tab reuse for repeated script executions, appending new logs to the existing tab instead of creating duplicates.
+- Converted theme toggle button to an instance attribute (`self.dark_btn`) for consistent reference in the `toggle_dark_mode` method.
+
+## [1.6.0] - 2025-12-27
+
+### Added
+- Implemented script cancellation mechanism:
+  - Added a "Cancel Current Script" button to terminate the running script in the selected tab.
+  - Tracked subprocesses in a new `processes` dict for safe termination.
+  - Updated tab change handler to enable/disable the cancel button based on tab type and running status.
+  - Enhanced application close handler to terminate all running scripts if user confirms.
+
+## [1.5.0] - 2025-12-27
+
+### Improved
+- Adapted tooltips to dynamically change background and foreground colors based on the current dark/light theme for improved visibility and consistency.
 
 ## [1.4.0] - 2025-12-27
 
@@ -56,4 +78,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tab management features: save, close, reorder, and auto-clear finished tabs.
 - Dynamic button grid with responsive layout.
 ```
-
+</DOCUMENT>

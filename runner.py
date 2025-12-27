@@ -124,6 +124,7 @@ class ScriptRunnerApp:
 
         # Runtime tracking
         self.running_scripts: Dict[str, bool] = {}      # Tracks which scripts are currently running
+        self.processes: Dict[str, subprocess.Popen[str]] = {}  # Tracks active subprocesses for cancellation
         self.script_frames: Dict[str, ttk.Frame] = {}   # Maps script path → tab frame
         self.script_texts: Dict[str, tk.Text] = {}      # Maps script path → log text widget
         self.all_texts: List[tk.Text] = []              # All text widgets (for global operations)
@@ -139,11 +140,13 @@ class ScriptRunnerApp:
         self.console_frame: ttk.Frame
         self.controls_frame: ttk.Frame
         self.close_btn: ttk.Button
+        self.cancel_btn: ttk.Button  # New: for canceling scripts
         self.filter_frame: ttk.Frame
         self.search_var: tk.StringVar
         self.search_entry: ttk.Entry
         self.tag_var: tk.StringVar
         self.btn_frame: ttk.Frame
+        self.dark_btn: ttk.Button  # Added for theme toggle
 
         # Build the UI
         self.setup_ui()
@@ -224,6 +227,12 @@ class ScriptRunnerApp:
         )
         self.close_btn.pack(side="left", padx=10)
         ToolTip(self.close_btn, "Close the current script tab (if not running)")
+        # Cancel current script
+        self.cancel_btn = ttk.Button(
+            self.controls_frame, text="Cancel Script", command=self.cancel_current_script
+        )
+        self.cancel_btn.pack(side="left", padx=10)
+        ToolTip(self.cancel_btn, "Cancel the running script in the current tab if it's running")
 
         # Clear all finished script tabs
         clear_tabs_btn: ttk.Button = ttk.Button(
@@ -245,13 +254,13 @@ class ScriptRunnerApp:
         ToolTip(max_concurrent_spin, "Set the maximum number of concurrent script executions (1-20)")
 
         # Theme toggle button
-        dark_btn: ttk.Button = ttk.Button(
+        self.dark_btn = ttk.Button(
             self.controls_frame,
             text="Disable Dark Mode" if self.dark_mode else "Enable Dark Mode",
             command=self.toggle_dark_mode,
         )
-        dark_btn.pack(side="right", padx=10)
-        ToolTip(dark_btn, "Switch between light and dark theme")
+        self.dark_btn.pack(side="right", padx=10)
+        ToolTip(self.dark_btn, "Switch between light and dark theme")
 
     def setup_filter_frame(self) -> None:
         """Create search and tag filter controls."""
@@ -343,6 +352,7 @@ class ScriptRunnerApp:
         """Switch between dark and light themes and update button text."""
         self.dark_mode = not self.dark_mode
         sv_ttk.set_theme("dark" if self.dark_mode else "light")
+        self.dark_btn.config(text="Disable Dark Mode" if self.dark_mode else "Enable Dark Mode")
 
     ##################################################################
     # Logging and Tab Management
@@ -436,6 +446,29 @@ class ScriptRunnerApp:
         self.log_notebook.select(self.console_frame)  # Select Console
         self.log(f"[INFO] Closed tab: {tab_text}")
 
+    def cancel_current_script(self) -> None:
+        """Cancel the running script in the currently selected tab if applicable."""
+        current_tab: Optional[str] = self.log_notebook.select()
+        if not current_tab:
+            return
+        tab_text: str = self.log_notebook.tab(current_tab, "text")
+        if tab_text in ["Console", "Scratchpad"]:
+            self.log("[INFO] No script to cancel in permanent tabs.")
+            return
+        frame: tk.Widget = self.root.nametowidget(current_tab)
+        path: Optional[str] = next((p for p, f in self.script_frames.items() if f == frame), None)
+        if not path or not (path in self.running_scripts and self.running_scripts[path]):
+            self.log("[WARN] No running script in this tab or invalid tab.")
+            return
+        proc: Optional[subprocess.Popen[str]] = self.processes.get(path)
+        if proc:
+            proc.terminate()
+            self.log("[INFO] Script cancellation requested.", target=self.script_texts[path])
+            # The done handler will detect termination and clean up
+        else:
+            self.log("[WARN] No process found for cancellation.")
+
+
     def close_finished_tabs(self) -> None:
         """Close all script tabs that have completed execution."""
         to_close: List[Tuple[str, ttk.Frame, tk.Text]] = []
@@ -457,17 +490,26 @@ class ScriptRunnerApp:
         self.log_notebook.select(self.console_frame)
 
     def on_tab_change(self, event: Optional[tk.Event]) -> None:
-        """Enable/disable the close button based on the selected tab."""
+        """Enable/disable the close and cancel buttons based on the selected tab."""
         current_tab: Optional[str] = self.log_notebook.select()
         if not current_tab:
             self.close_btn.config(state="disabled")
+            self.cancel_btn.config(state="disabled")
             return
         tab_text: str = self.log_notebook.tab(current_tab, "text")
-        self.close_btn.config(
-            state="normal" if tab_text not in ["Console", "Scratchpad"] else "disabled"
-        )
+        is_script_tab: bool = tab_text not in ["Console", "Scratchpad"]
+        self.close_btn.config(state="normal" if is_script_tab else "disabled")
+        # For cancel: enable only if script tab and running
+        if is_script_tab:
+            frame: tk.Widget = self.root.nametowidget(current_tab)
+            path: Optional[str] = next((p for p, f in self.script_frames.items() if f == frame), None)
+            is_running: bool = bool(path and path in self.running_scripts and self.running_scripts[path])
+            self.cancel_btn.config(state="normal" if is_running else "disabled")
+        else:
+            self.cancel_btn.config(state="disabled")
+
     def on_close(self) -> None:
-        """Handle window close event: prompt if scripts are running."""
+        """Handle window close event: prompt if scripts are running and terminate if confirmed."""
         running = [self.path_to_label.get(p, os.path.basename(p)) for p, r in self.running_scripts.items() if r]
         if running:
             script_list = "\n".join(running)
@@ -480,10 +522,17 @@ class ScriptRunnerApp:
             )
             if not confirm:
                 return  # Cancel close
-            # Optional: gracefully terminate running subprocesses here if you track proc objects
-            # (Current code doesn't store proc, so they die with the app anyway)
+            # Terminate all running processes
+            for path in list(self.processes):
+                proc = self.processes[path]
+                proc.terminate()
+                try:
+                    proc.wait(timeout=2)  # Wait briefly for clean exit
+                except subprocess.TimeoutExpired:
+                    proc.kill()  # Force kill if needed
 
         self.root.destroy()  # Proceed with close
+
     def reorder_tab(self, event: tk.Event) -> None:
         """Allow reordering tabs by dragging with the mouse."""
         try:
@@ -600,7 +649,7 @@ class ScriptRunnerApp:
             self.set_button_state(path, "normal")
             return
 
-        # Create a dedicated tab for this script if it doesn't exist
+        # Get or create dedicated tab for this script
         if path not in self.script_texts:
             frame: ttk.Frame = ttk.Frame(self.log_notebook)
             text: tk.Text = tk.Text(
@@ -615,9 +664,11 @@ class ScriptRunnerApp:
             self.script_frames[path] = frame
             self.script_texts[path] = text
             self.all_texts.append(text)
+        else:
+            frame = self.script_frames[path]
+            text = self.script_texts[path]
 
-        target: tk.Text = self.script_texts[path]
-        frame: ttk.Frame = self.script_frames[path]
+        target: tk.Text = text
         self.log_notebook.select(frame)  # Switch to this script's tab
 
         # Log start separator
@@ -663,6 +714,7 @@ class ScriptRunnerApp:
                 text=True,
                 cwd=os.path.dirname(full_path or "."),
             )
+            self.processes[path] = proc  # Store for potential cancellation
             # Send password immediately if needed
             if password:
                 proc.stdin.write(password + "\n")  # type: ignore
@@ -687,6 +739,8 @@ class ScriptRunnerApp:
                 self.log(f"[{status}] {os.path.basename(pth)}", target=tgt)
                 self.log("#" * 50, target=tgt)
                 self.running_scripts.pop(pth, None)
+                if pth in self.processes:
+                    del self.processes[pth]
                 self.set_button_state(pth, "normal")
 
             threading.Thread(target=done, args=(target, path), daemon=True).start()
