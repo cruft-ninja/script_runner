@@ -466,8 +466,10 @@ class ScriptRunnerApp:
             self.running_scripts.pop(path, None)
             self.set_button_state(path, "normal")
             return
-        if not os.path.exists(path):
-            self.log(f"[ERROR] Script not found: {path}")
+
+        full_path = os.path.join(os.path.dirname(__file__), path)
+        if not os.path.exists(full_path):
+            self.log(f"[ERROR] Script not found: {full_path}")
             self.running_scripts.pop(path, None)
             self.set_button_state(path, "normal")
             return
@@ -492,7 +494,7 @@ class ScriptRunnerApp:
         self.log_notebook.select(frame)
 
         self.log("\n" + "#" * 50, target=target)
-        self.log(f"[INFO] Running: {path}", target=target)
+        self.log(f"[INFO] Running: {full_path}", target=target)
 
         password = None
         if needs_sudo:
@@ -513,13 +515,13 @@ class ScriptRunnerApp:
 
         if needs_sudo:
             cmd = (
-                ["sudo", "-S" if password else "", "bash", path]
+                ["sudo", "-S" if password else "", "bash", full_path]
                 if password or not sudo_cached
-                else ["sudo", "bash", path]
+                else ["sudo", "bash", full_path]
             )
             cmd = [c for c in cmd if c]  # Remove empty strings
         else:
-            cmd = ["bash", path]
+            cmd = ["bash", full_path]
 
         try:
             proc = subprocess.Popen(
@@ -528,7 +530,7 @@ class ScriptRunnerApp:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                cwd=os.path.dirname(path or "."),
+                cwd=os.path.dirname(full_path or "."),
             )
             if password:
                 proc.stdin.write(password + "\n")  # type: ignore
