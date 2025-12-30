@@ -1,0 +1,163 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Geany**
+
+Geany is a free, open-source lightweight text editor with basic integrated development environment features.
+
+It uses the Scintilla editing component and GTK toolkit for fast performance and minimal dependencies.
+
+It supports Linux, Windows, macOS, and other platforms.
+
+Its key strengths are quick startup, low resource usage, and extensibility via plugins.
+
+As of December 2025, the latest version is 2.1.0.
+
+Key features include:
+- Syntax highlighting and code folding for over 50 programming languages
+- Code completion, call tips, and auto-closing of XML/HTML tags
+- Symbol list browser and project management
+- Built-in compile and build system with customizable commands
+- Embedded terminal emulator for running commands
+- Plugin support for additional functionality like file browser and debugger integration
+- Support for multiple document tabs and sessions
+- Customizable interface with themes and keyboard shortcuts
+
+Home Page: 
+- [Geany](https://www.geany.org/)
+
+Alternatives:
+- [Kate](https://kate-editor.org/)
+- [Gedit](https://wiki.gnome.org/Apps/Gedit)
+- [Mousepad](https://docs.xfce.org/apps/mousepad/start)
+**gedit**
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+gedit is a free, open-source general-purpose text editor designed for the GNOME desktop environment.
+
+It emphasizes simplicity and ease of use while supporting code editing and markup languages.
+
+It runs on Linux, Windows, and macOS.
+
+Key strengths include clean interface, flexible plugin system, and good GNOME integration.
+
+Recent updates in 2025 include fixes for handling large files.
+
+Key features include:
+- Syntax highlighting for numerous programming languages and markup formats via GtkSourceView
+- Multi-tab support for editing multiple files with draggable tabs
+- Search and replace with regex, including replace all
+- Full undo/redo, auto-indentation, bracket matching, and line numbering
+- Spell checking with multi-language support
+- Printing and print preview with syntax highlighting
+- Extensive plugin system for added tools like external terminal or snippets
+- Support for remote file editing via GVfs and automatic backups
+
+Home Page: 
+- [gedit](https://gedit-text-editor.org/)
+
+Alternatives:
+- [Kate](https://kate-editor.org/)
+- [Geany](https://www.geany.org/)
+- [Pluma](https://github.com/mate-desktop/pluma)
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Thonny**
+
+Thonny is a free, open-source Python integrated development environment designed for beginners.
+
+It comes bundled with Python and focuses on simplifying debugging and understanding program execution.
+
+It supports Linux, Windows, and macOS platforms.
+
+Key strengths include a clean interface, beginner-friendly tools, and support for MicroPython on devices like Raspberry Pi Pico.
+
+As of December 2025, the latest version is 4.1.7.
+
+Key features include:
+- Step-by-step debugger with expression evaluation and call stack visualization
+- Variable explorer showing local/global scopes and references
+- Syntax highlighting, auto-completion, and immediate error detection
+- Built-in Python interpreter and easy third-party package management via pip
+- MicroPython support for uploading and running code on microcontrollers
+- Separate windows for function calls to illustrate recursion
+- Simple shell access and file manager for device interaction
+- Plugin system for extending functionality
+
+Home Page: 
+- [Thonny](https://thonny.org/)
+
+Alternatives:
+- [IDLE](https://docs.python.org/3/library/idle.html)
+- [Spyder](https://www.spyder-ide.org/)
+- [Pyzo](https://pyzo.org/)
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Yes, you can absolutely configure the **Continue** plugin to use Gemini. Since Continue is an open-source extension, it allows you to swap out the default models for your own API-powered ones.
+
+### **Prerequisites**
+
+Before you begin, make sure you have your **Gemini API Key** from [Google AI Studio](https://aistudio.google.com/).
+
+---
+
+### **How to Configure Gemini in Continue**
+
+1. **Open the Config File:**
+* In VS Code, click the **Continue icon** in the sidebar.
+* Click the **gear icon (Settings)** at the bottom of the Continue pane. This will open your `config.json` (or `config.yaml` in newer versions).
+
+
+2. **Add Gemini to the `models` list:**
+Paste the following block into the `"models"` array. Replace `<YOUR_GEMINI_API_KEY>` with the key you generated.
+**For `config.json` (Standard):**
+```json
+{
+  "models": [
+    {
+      "title": "Gemini 2.0 Flash",
+      "provider": "gemini",
+      "model": "gemini-2.0-flash",
+      "apiKey": "YOUR_GEMINI_API_KEY"
+    },
+    {
+      "title": "Gemini 1.5 Pro",
+      "provider": "gemini",
+      "model": "gemini-1.5-pro",
+      "apiKey": "YOUR_GEMINI_API_KEY"
+    }
+  ]
+}
+
+```
+
+
+3. **Save and Reload:**
+Save the file. Continue should automatically reload. You can now select "Gemini 2.0 Flash" or "Gemini 1.5 Pro" from the model dropdown at the bottom of the Continue chat window.
+
+---
+
+### **Recommended Setup for Best Performance**
+
+If you want the full experience (chat, autocomplete, and code editing), you can assign different Gemini models to specific roles in your `config.json`:
+
+* **Chat:** Use `gemini-1.5-pro` for complex reasoning.
+* **Autocomplete:** Use `gemini-2.0-flash` because it is significantly faster for inline suggestions.
+
+```json
+"tabAutocompleteModel": {
+  "title": "Gemini Autocomplete",
+  "provider": "gemini",
+  "model": "gemini-2.0-flash",
+  "apiKey": "YOUR_GEMINI_API_KEY"
+}
+
+```
+
+### **Troubleshooting Tips**
+
+* **SSL Errors:** If you are behind a corporate proxy, remember to enable the `http.systemCertificatesNode` setting in VS Code as we discussed earlier.
+* **Model IDs:** Ensure you are using the correct model strings (e.g., `gemini-2.0-flash` or `gemini-1.5-flash`). You can find the latest IDs in the [Google AI Studio documentation](https://ai.google.dev/models/gemini).
+
+Would you like me to help you set up a specific model for **Tab Autocomplete** as well?
